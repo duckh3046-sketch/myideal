@@ -1,0 +1,25 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MyIdeal AI</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0c0c11;color:#fff;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif}main{max-width:520px;margin:auto;padding:24px 18px 50px}.brand{font-size:30px;font-weight:900}.brand span{color:#f06f9d}.sub,.hint{color:#aaaab7}.card{background:#181820;border:1px solid #2b2b36;border-radius:24px;padding:20px;margin-top:18px}.label{font-size:13px;color:#aaaab7;margin:16px 0 8px}.choices{display:flex;gap:8px;flex-wrap:wrap}.chip{padding:10px 13px;border-radius:999px;border:1px solid #383845;background:#252530;color:#fff}.chip.on{background:#f06f9d;border-color:#f06f9d}textarea,input{width:100%;padding:14px;border-radius:15px;border:1px solid #343440;background:#101016;color:#fff;font-size:15px}textarea{min-height:90px}.btn{width:100%;margin-top:18px;padding:15px;border:0;border-radius:17px;background:#f06f9d;color:#fff;font-weight:850;font-size:16px}.hidden{display:none}.photo{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:24px;background:#20202a}.loading{padding:60px 20px;text-align:center;color:#bbb}.error{color:#ff9bad;white-space:pre-wrap}.summary{line-height:1.6;color:#ddd;margin-top:12px}
+</style></head><body><main>
+<div class="brand">My<span>Ideal</span></div><div class="sub">AI로 내 이상형을 생성합니다.</div>
+<section id="maker" class="card"><div id="fields"></div>
+<div class="label">성격</div><textarea id="personality" placeholder="예: 다정하고 장난기가 많고 대화를 잘 들어준다."></textarea>
+<div class="label">이름</div><input id="name" value="하린">
+<button class="btn" id="makeBtn" onclick="make()">AI 이상형 생성</button>
+<div class="hint" style="font-size:12px;margin-top:12px">실존 인물을 복제하는 기능이 아니라 새로운 가상 인물을 생성하는 MVP입니다.</div></section>
+<section id="result" class="hidden"><div class="card"><div id="loading" class="loading">얼굴을 만들고 있어요…</div><img id="photo" class="photo hidden"><div id="err" class="error"></div><h2 id="rname"></h2><div id="summary" class="summary"></div><button class="btn" onclick="again()">다시 만들기</button></div></section>
+<script>
+const cfg={"얼굴형":["계란형","둥근형","갸름한형","각진형"],"동물상":["고양이상","강아지상","여우상","토끼상"],"눈":["큰 눈","긴 눈","처진 눈","날카로운 눈"],"코":["오똑한 코","작은 코","직선형 코","부드러운 코"],"입":["도톰한 입술","얇은 입술","작은 입","웃는 입꼬리"],"헤어":["긴 생머리","단발","웨이브","숏컷"]}, state={};
+const f=document.querySelector("#fields");
+Object.entries(cfg).forEach(([k,vs])=>{f.insertAdjacentHTML("beforeend",`<div class="label">${k}</div>`);let w=document.createElement("div");w.className="choices";vs.forEach((v,i)=>{let b=document.createElement("button");b.className="chip"+(i?"":" on");b.textContent=v;if(!i)state[k]=v;b.onclick=e=>{e.preventDefault();[...w.children].forEach(x=>x.classList.remove("on"));b.classList.add("on");state[k]=v};w.appendChild(b)});f.appendChild(w)});
+async function make(){
+ state.성격=document.querySelector("#personality").value.trim()||"다정하고 편안한 성격";state.이름=document.querySelector("#name").value.trim()||"하린";
+ document.querySelector("#maker").classList.add("hidden");document.querySelector("#result").classList.remove("hidden");document.querySelector("#loading").classList.remove("hidden");document.querySelector("#photo").classList.add("hidden");document.querySelector("#err").textContent="";
+ document.querySelector("#rname").textContent=state.이름;document.querySelector("#summary").textContent=Object.entries(state).filter(([k])=>!["이름","성격"].includes(k)).map(x=>x[1]).join(" · ")+" / "+state.성격;
+ try{let r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(state)});let d=await r.json();if(!r.ok)throw new Error(d.error||"생성 실패");document.querySelector("#photo").src="data:image/png;base64,"+d.image;document.querySelector("#photo").classList.remove("hidden")}
+ catch(e){document.querySelector("#err").textContent="이미지를 만들지 못했습니다.\n"+e.message}
+ finally{document.querySelector("#loading").classList.add("hidden")}
+}
+function again(){document.querySelector("#result").classList.add("hidden");document.querySelector("#maker").classList.remove("hidden")}
+</script></main></body></html>
